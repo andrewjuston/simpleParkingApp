@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { Stage, Layer, Group, Rect, Text } from 'react-konva';
 
 // ─── Screen 2: Parking Lot UI ───────────────────────────────────────────────
-const ParkingLot = ({ vehicleInfo, slots, onBack, onBookSlot }) => {
+const ParkingLot = ({ vehicleInfo, slots, onBack, onBookSlot, onUnbookSlot }) => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
 
   const handleSlotClick = (slot) => {
-    if (slot.booked) return;
     setSelectedSlot(slot);
-    setShowModal(true);
+    if (slot.booked) {
+      setShowEndModal(true);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleConfirmBooking = () => {
@@ -18,9 +22,24 @@ const ParkingLot = ({ vehicleInfo, slots, onBack, onBookSlot }) => {
     onBack(); // Go back to vehicle selection after booking
   };
 
+  const handleEndSession = () => {
+    onUnbookSlot(selectedSlot.type, selectedSlot.id);
+    closeEndModal();
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setSelectedSlot(null);
+  };
+
+  const closeEndModal = () => {
+    setShowEndModal(false);
+    setSelectedSlot(null);
+  };
+
+  const calculateCost = () => {
+    const rate = vehicleInfo.type === 'car' ? 5 : 3; // $5/hour for cars, $3/hour for motorcycles
+    return rate * vehicleInfo.duration;
   };
 
   return (
@@ -33,6 +52,7 @@ const ParkingLot = ({ vehicleInfo, slots, onBack, onBookSlot }) => {
             {vehicleInfo.type === 'car' ? '🚘 Car' : '🏍️ Motorcycle'}
           </span>
           <span style={styles.plate}>Plate: <strong>{vehicleInfo.plate}</strong></span>
+          <span style={styles.duration}>Duration: <strong>{vehicleInfo.duration}h</strong></span>
         </div>
       </div>
 
@@ -92,14 +112,46 @@ const ParkingLot = ({ vehicleInfo, slots, onBack, onBookSlot }) => {
             <p style={{ color: '#555', margin: '0 0 8px' }}>
               Vehicle: <strong>{vehicleInfo.type.toUpperCase()}</strong>
             </p>
-            <p style={{ color: '#555', margin: '0 0 20px' }}>
+            <p style={{ color: '#555', margin: '0 0 8px' }}>
               Plate: <strong>{vehicleInfo.plate}</strong>
+            </p>
+            <p style={{ color: '#555', margin: '0 0 8px' }}>
+              Duration: <strong>{vehicleInfo.duration} hour{vehicleInfo.duration > 1 ? 's' : ''}</strong>
+            </p>
+            <p style={{ color: '#555', margin: '0 0 20px' }}>
+              Total Cost: <strong>${calculateCost()}</strong>
             </p>
             <div style={modalStyles.buttonGroup}>
               <button style={modalStyles.confirmBtn} onClick={handleConfirmBooking}>
                 ✅ Confirm
               </button>
               <button style={modalStyles.cancelBtn} onClick={closeModal}>
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* End Session Modal */}
+      {showEndModal && selectedSlot && (
+        <div style={modalStyles.overlay} onClick={closeEndModal}>
+          <div style={modalStyles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 10px' }}>End Parking Session</h3>
+            <p style={{ color: '#555', margin: '0 0 8px' }}>
+              Slot: <strong>{selectedSlot.label}</strong>
+            </p>
+            <p style={{ color: '#555', margin: '0 0 8px' }}>
+              Vehicle Type: <strong>{selectedSlot.type.toUpperCase()}</strong>
+            </p>
+            <p style={{ color: '#e74c3c', margin: '0 0 20px', fontWeight: 'bold' }}>
+              Are you sure you want to end this parking session?
+            </p>
+            <div style={modalStyles.buttonGroup}>
+              <button style={modalStyles.endBtn} onClick={handleEndSession}>
+                🏁 End Session
+              </button>
+              <button style={modalStyles.cancelBtn} onClick={closeEndModal}>
                 ❌ Cancel
               </button>
             </div>
@@ -144,6 +196,7 @@ const styles = {
     fontWeight: '600',
   }),
   plate: { color: '#555', fontSize: '14px' },
+  duration: { color: '#555', fontSize: '14px' },
 };
 
 const modalStyles = {
@@ -159,6 +212,10 @@ const modalStyles = {
   buttonGroup: { display: 'flex', justifyContent: 'space-around', marginTop: '16px' },
   confirmBtn: {
     padding: '10px 20px', background: '#2ecc71', color: '#fff',
+    border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer',
+  },
+  endBtn: {
+    padding: '10px 20px', background: '#f39c12', color: '#fff',
     border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer',
   },
   cancelBtn: {

@@ -38,6 +38,18 @@ export default function ParkingApp() {
     }
   };
 
+  const handleUnbookSlot = (type, slotId) => {
+    if (type === 'car') {
+      setCarSlots((prev) =>
+        prev.map((s) => (s.id === slotId ? { ...s, booked: false } : s))
+      );
+    } else {
+      setMotorcycleSlots((prev) =>
+        prev.map((s) => (s.id === slotId ? { ...s, booked: false } : s))
+      );
+    }
+  };
+
   return (
     <>
       {view === 'form' && <VehicleForm onNext={handleNext} onCheck={handleCheck} />}
@@ -47,6 +59,7 @@ export default function ParkingApp() {
           slots={vehicleInfo.type === 'car' ? carSlots : motorcycleSlots}
           onBack={handleBack}
           onBookSlot={handleBookSlot}
+          onUnbookSlot={handleUnbookSlot}
         />
       )}
       {view === 'check' && (

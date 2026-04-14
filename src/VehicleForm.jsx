@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 const VehicleForm = ({ onNext, onCheck }) => {
   const [vehicleType, setVehicleType] = useState('car');
   const [plate, setPlate] = useState('');
+  const [duration, setDuration] = useState(1);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -12,7 +13,11 @@ const VehicleForm = ({ onNext, onCheck }) => {
       setError('License plate is required');
       return;
     }
-    onNext({ type: vehicleType, plate: plate.toUpperCase().trim() });
+    if (duration < 1) {
+      setError('Duration must be at least 1 hour');
+      return;
+    }
+    onNext({ type: vehicleType, plate: plate.toUpperCase().trim(), duration });
   };
 
   return (
@@ -52,6 +57,20 @@ const VehicleForm = ({ onNext, onCheck }) => {
             maxLength={10}
           />
           {error && <p style={styles.error}>{error}</p>}
+        </div>
+
+        {/* Duration Input */}
+        <div style={styles.fieldGroup}>
+          <label style={styles.label} htmlFor="duration">Parking Duration (hours)</label>
+          <input
+            id="duration"
+            type="number"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
+            min="1"
+            max="24"
+            style={styles.input}
+          />
         </div>
 
         <button type="submit" style={styles.primaryBtn}>
